@@ -1,0 +1,69 @@
+seed: 42
+num_classes: 6
+class_names: [Benign, FA, PTC, FTC, MTC, ATC]
+
+paths:
+  real_root: data/raw/real
+  synthetic_root: data/raw/synthetic
+  split_dir: data/splits
+  output_dir: outputs
+  cost_matrix: data/metadata/cost_matrix.csv
+
+classifier:
+  architecture: resnet50
+  image_size: 224
+  batch_size: 16
+  epochs: 50
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  num_workers: 4
+  pretrained: true
+  amp: true
+  early_stop_patience: 12
+
+loss:
+  lambda_ce: 1.0
+  lambda_margin: 0.2
+  lambda_cost: 0.2
+  lambda_recall: 0.2
+  margin_alpha: 0.35
+  logit_scale: 20.0
+  high_risk_classes: [3, 4, 5]
+  high_risk_weight: 2.0
+
+tiger:
+  pretrained_model_path: ../model/pretrainmodel
+  controlnet_fg_path: ../modelsaved/finetrainmodel/checkpoint-3000/controlnet
+  controlnet_bg_path: ../modelsaved/finetrainmodel/checkpoint-5000/controlnet
+  init_image_dir: data/raw/tiger_conditions/init_image
+  mask_nd_dir: data/raw/tiger_conditions/mask_nd
+  mask_bg_dir: data/raw/tiger_conditions/mask_bg
+  condition_bg_dir: data/raw/tiger_conditions/condition_bg
+  output_dir: data/raw/synthetic
+  image_size: 512
+  device: cuda
+  dtype: float16
+  num_inference_steps_fg: 50
+  num_inference_steps_bg: 20
+  guidance_scale_fg: 8.0
+  guidance_scale_bg: 0.02
+  controlnet_conditioning_scale_fg: 0.2
+  controlnet_conditioning_scale_bg: 1.0
+  eta: 1.0
+  negative_prompt: ""
+  prompt_templates:
+    Benign: "benign thyroid nodule, regular margin, even echo, no suspicious points"
+    FA: "follicular adenoma thyroid ultrasound, benign, regular, solid, even echo"
+    PTC: "papillary thyroid carcinoma ultrasound, malignant, solid, microcalcification, irregular margin, low echo"
+    FTC: "follicular thyroid carcinoma ultrasound, malignant, solid, unclear margin, uneven echo"
+    MTC: "medullary thyroid carcinoma ultrasound, malignant, solid, cystic, uneven echo, white points"
+    ATC: "anaplastic thyroid carcinoma ultrasound, aggressive malignant, irregular, unclear margin, heterogeneous echo"
+
+bayes:
+  n_trials: 20
+  synthetic_candidates_per_trial: 20
+  target_classes: [FA, FTC, MTC, ATC]
+  objective_metric: macro_auc
+  quick_epochs: 8
+  study_name: biodram_tiger_cnn
+  storage: null
